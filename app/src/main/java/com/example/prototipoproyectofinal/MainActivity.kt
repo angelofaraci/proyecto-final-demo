@@ -4,10 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -16,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,19 +29,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.layout.BoxWithConstraints
 import com.example.prototipoproyectofinal.ui.theme.PrototipoProyectoFinalTheme
 
 // Simple navigation states for this prototype
 private enum class Screen {
     Courses,
     Units,
-    Lessons
+    Lessons,
+    Exercise
 }
 
 class MainActivity : ComponentActivity() {
@@ -65,7 +70,12 @@ class MainActivity : ComponentActivity() {
                         )
 
                         Screen.Lessons -> LessonsScreen(
-                            onBackClick = { currentScreen = Screen.Units }
+                            onBackClick = { currentScreen = Screen.Units },
+                            onLec1Click = { currentScreen = Screen.Exercise }
+                        )
+
+                        Screen.Exercise -> ExerciseScreen(
+                            onBackClick = { currentScreen = Screen.Lessons }
                         )
                     }
                 }
@@ -195,7 +205,8 @@ fun UnitsScreen(
 @Composable
 fun LessonsScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onLec1Click: () -> Unit = {}
 ) {
     Column(
         modifier = modifier
@@ -225,14 +236,15 @@ fun LessonsScreen(
                 .weight(1f),
             contentAlignment = Alignment.Center
         ) {
-            LessonPath()
+            LessonPath(onLec1Click = onLec1Click)
         }
     }
 }
 
 @Composable
 private fun LessonPath(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLec1Click: () -> Unit = {}
 ) {
     // Normalized (0f..1f) positions along the path
     val points = listOf(
@@ -272,7 +284,7 @@ private fun LessonPath(
         LessonNode("Lec 4", points[2], boxWidth, boxHeight)
         LessonNode("Lec 3", points[3], boxWidth, boxHeight)
         LessonNode("Lec 2", points[4], boxWidth, boxHeight)
-        LessonNode("Lec 1", points[5], boxWidth, boxHeight)
+        LessonNode("Lec 1", points[5], boxWidth, boxHeight, onClick = onLec1Click)
     }
 }
 
@@ -281,7 +293,8 @@ private fun LessonNode(
     label: String,
     normalizedPos: Offset,
     boxWidth: Dp,
-    boxHeight: Dp
+    boxHeight: Dp,
+    onClick: (() -> Unit)? = null
 ) {
     val circleSize = 64.dp
 
@@ -292,6 +305,13 @@ private fun LessonNode(
                 y = boxHeight * normalizedPos.y - circleSize / 2
             )
             .size(circleSize)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                }
+            )
     ) {
         Surface(
             shape = CircleShape,
@@ -303,6 +323,161 @@ private fun LessonNode(
             ) {
                 Text(text = label, style = MaterialTheme.typography.bodyMedium)
             }
+        }
+    }
+}
+
+@Composable
+fun ExerciseScreen(
+    modifier: Modifier = Modifier,
+    onBackClick: () -> Unit = {}
+) {
+    val correctAnswer = 5
+    var selectedAnswer by remember { mutableStateOf<Int?>(null) }
+    var lastWrongAnswer by remember { mutableStateOf<Int?>(null) }
+
+    val isCorrectAnswered = selectedAnswer == correctAnswer
+
+    // Reset wrong answer feedback after a short delay
+    LaunchedEffect(lastWrongAnswer) {
+        if (lastWrongAnswer != null) {
+            kotlinx.coroutines.delay(600)
+            lastWrongAnswer = null
+        }
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .padding(horizontal = 16.dp, vertical = 24.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "←",
+                fontSize = 24.sp,
+                modifier = Modifier.clickable(onClick = onBackClick)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Selecciona el recuadro correcto",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Animate the equation when the correct answer is revealed
+        val equationScale by animateFloatAsState(
+            targetValue = if (isCorrectAnswered) 1.05f else 1f,
+            label = "equationScale"
+        )
+        val equationAlpha by animateFloatAsState(
+            targetValue = if (isCorrectAnswered) 1f else 0.9f,
+            label = "equationAlpha"
+        )
+
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .graphicsLayer(
+                    scaleX = equationScale,
+                    scaleY = equationScale,
+                    alpha = equationAlpha
+                ),
+            shape = RoundedCornerShape(8.dp),
+            color = Color(0xFFE0E0E0),
+            shadowElevation = 0.dp
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = if (isCorrectAnswered) "2 + 3 = 5" else "2 + 3 = ?",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        val answers = listOf(5, 6, 7, 8)
+
+        answers.forEach { value ->
+            val isCorrect = value == correctAnswer
+            val isSelectedCorrect = selectedAnswer == value && isCorrect
+            val isWrong = lastWrongAnswer == value
+
+            AnswerButton(
+                value = value,
+                isCorrectSelected = isSelectedCorrect,
+                isWrong = isWrong,
+                enabled = !isCorrectAnswered
+            ) {
+                if (isCorrectAnswered) return@AnswerButton
+
+                if (isCorrect) {
+                    selectedAnswer = value
+                } else {
+                    lastWrongAnswer = value
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+private fun AnswerButton(
+    value: Int,
+    isCorrectSelected: Boolean,
+    isWrong: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    val baseColor = Color(0xFF333333)
+    val targetColor = when {
+        isCorrectSelected -> Color(0xFF4CAF50)
+        isWrong -> Color(0xFFF44336)
+        else -> baseColor
+    }
+
+    val backgroundColor by animateColorAsState(targetValue = targetColor, label = "answerColor")
+
+    val targetScale = if (isCorrectSelected) 1.05f else 1f
+    val scale by animateFloatAsState(targetValue = targetScale, label = "answerScale")
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .then(
+                if (enabled) Modifier.clickable(onClick = onClick) else Modifier
+            ),
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor,
+        shadowElevation = 0.dp
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
         }
     }
 }
@@ -359,5 +534,13 @@ fun UnitsScreenPreview() {
 fun LessonsScreenPreview() {
     PrototipoProyectoFinalTheme {
         LessonsScreen()
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun ExerciseScreenPreview() {
+    PrototipoProyectoFinalTheme {
+        ExerciseScreen()
     }
 }
