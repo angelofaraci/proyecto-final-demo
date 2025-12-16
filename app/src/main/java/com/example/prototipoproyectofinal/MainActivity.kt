@@ -89,49 +89,90 @@ fun CoursesScreen(
     modifier: Modifier = Modifier,
     onFirstYearClick: () -> Unit = {}
 ) {
-    Box(
+    // Palette for Cursos page based on provided colors
+    val deepBackground = Color(0xFF3C396E) // #3C396E first background
+    val cardColor = Color(0xFF4F5CA4)      // #4F5CA4 card background
+
+    // Buttons use #B3D7F5 now
+    val buttonColor = Color(0xFFB3D7F5)    // #B3D7F5 shared button color
+    val buttonTextColor = Color(0xFF264939) // dark green for contrast
+    val titleColor = Color(0xFFB3D7F5)     // use same light blue for title
+
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        contentAlignment = Alignment.TopStart
+            .background(deepBackground)
+            .padding(horizontal = 16.dp, vertical = 32.dp)
     ) {
+        // Section title at top-left
+        Text(
+            text = "Cursos",
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            ),
+            color = titleColor,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         Card(
             modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+                .fillMaxWidth()
+                .weight(1f),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF5F5F5)
+                containerColor = cardColor
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "Cursos",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = Color.Black
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // All buttons share the same #B3D7F5 background and dark text
+                CoursePill(
+                    text = "1er Año",
+                    textColor = buttonTextColor,
+                    onClick = onFirstYearClick,
+                    large = true,
+                    backgroundColor = buttonColor
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
-
                 CoursePill(
-                    text = "Matemáticas - 1er Año",
-                    textColor = Color(0xFFD32F2F),
-                    onClick = onFirstYearClick
+                    text = "2do Año",
+                    textColor = buttonTextColor,
+                    onClick = { /* TODO: navigate to 2do Año */ },
+                    large = true,
+                    backgroundColor = buttonColor
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
-
                 CoursePill(
-                    text = "Matemáticas - 2do Año",
-                    onClick = { /* TODO: navigate to 2do Año */ }
+                    text = "3er Año",
+                    textColor = buttonTextColor,
+                    onClick = { /* TODO: navigate to 3er Año */ },
+                    large = true,
+                    backgroundColor = buttonColor
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                CoursePill(
+                    text = "4to Año",
+                    textColor = buttonTextColor,
+                    onClick = { /* TODO: navigate to 4to Año */ },
+                    large = true,
+                    backgroundColor = buttonColor
+                )
 
                 CoursePill(
-                    text = "Matemáticas - 3er Año",
-                    onClick = { /* TODO: navigate to 3er Año */ }
+                    text = "5to Año",
+                    textColor = buttonTextColor,
+                    onClick = { /* TODO: navigate to 5to Año */ },
+                    large = true,
+                    backgroundColor = buttonColor
                 )
             }
         }
@@ -144,58 +185,83 @@ fun UnitsScreen(
     onBackClick: () -> Unit = {},
     onFirstUnitClick: () -> Unit = {}
 ) {
-    Box(
+    // Reuse the same background and card colors as CoursesScreen
+    val deepBackground = Color(0xFF3C396E)
+    val cardColor = Color(0xFF4F5CA4)
+    val titleColor = Color(0xFFB3D7F5)
+    val buttonColor = Color(0xFFB3D7F5)
+    val buttonTextColor = Color(0xFF264939)
+
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
-            .padding(horizontal = 16.dp, vertical = 24.dp),
-        contentAlignment = Alignment.TopStart
+            .background(deepBackground)
+            .padding(horizontal = 16.dp, vertical = 32.dp)
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "←",
+                fontSize = 22.sp,
+                color = titleColor,
+                modifier = Modifier.clickable(onClick = onBackClick)
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Text(
+                text = "Unidades",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
+                ),
+                color = titleColor
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         Card(
             modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
+                .fillMaxWidth()
+                .weight(1f),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF5F5F5)
+                containerColor = cardColor
             ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "← Volver",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6200EE),
-                    modifier = Modifier
-                        .clickable(onClick = onBackClick)
-                        .padding(bottom = 16.dp)
-                )
-
-                Text(
-                    text = "Unidades",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                    color = Color.Black
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 CoursePill(
                     text = "Unidad 1 - N° Enteros",
-                    textColor = Color(0xFFD32F2F),
-                    onClick = onFirstUnitClick
+                    textColor = buttonTextColor,
+                    onClick = onFirstUnitClick,
+                    large = true,
+                    backgroundColor = buttonColor
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 CoursePill(
                     text = "Unidad 2 - Ecuaciones",
-                    onClick = { /* TODO: navigate to Unidad 2 */ }
+                    textColor = buttonTextColor,
+                    onClick = { /* TODO: navigate to Unidad 2 */ },
+                    large = true,
+                    backgroundColor = buttonColor
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
 
                 CoursePill(
                     text = "Unidad 3 - Geometría",
-                    onClick = { /* TODO: navigate to Unidad 3 */ }
+                    textColor = buttonTextColor,
+                    onClick = { /* TODO: navigate to Unidad 3 */ },
+                    large = true,
+                    backgroundColor = buttonColor
                 )
             }
         }
@@ -208,10 +274,13 @@ fun LessonsScreen(
     onBackClick: () -> Unit = {},
     onLec1Click: () -> Unit = {}
 ) {
+    val deepBackground = Color(0xFF3C396E)
+    val titleColor = Color(0xFFB3D7F5)
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(deepBackground)
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
         Row(
@@ -222,6 +291,7 @@ fun LessonsScreen(
             Text(
                 text = "←",
                 fontSize = 24.sp,
+                color = titleColor,
                 modifier = Modifier.clickable(onClick = onBackClick)
             )
 
@@ -346,10 +416,13 @@ fun ExerciseScreen(
         }
     }
 
+    val deepBackground = Color(0xFF3C396E)
+    val titleColor = Color(0xFFB3D7F5)
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(deepBackground)
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
         Row(
@@ -360,6 +433,7 @@ fun ExerciseScreen(
             Text(
                 text = "←",
                 fontSize = 24.sp,
+                color = titleColor,
                 modifier = Modifier.clickable(onClick = onBackClick)
             )
         }
@@ -369,6 +443,7 @@ fun ExerciseScreen(
         Text(
             text = "Selecciona el recuadro correcto",
             style = MaterialTheme.typography.titleMedium,
+            color = titleColor,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
@@ -394,7 +469,7 @@ fun ExerciseScreen(
                     alpha = equationAlpha
                 ),
             shape = RoundedCornerShape(8.dp),
-            color = Color(0xFFE0E0E0),
+            color = Color(0xFF4F5CA4),
             shadowElevation = 0.dp
         ) {
             Box(
@@ -403,7 +478,8 @@ fun ExerciseScreen(
             ) {
                 Text(
                     text = if (isCorrectAnswered) "2 + 3 = 5" else "2 + 3 = ?",
-                    style = MaterialTheme.typography.titleLarge
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
                 )
             }
         }
@@ -445,10 +521,14 @@ private fun AnswerButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    // Use #8DBC69 for correct, #C76562 for wrong, base dark for neutral
     val baseColor = Color(0xFF333333)
+    val correctColor = Color(0xFF8DBC69)
+    val wrongColor = Color(0xFFC76562)
+
     val targetColor = when {
-        isCorrectSelected -> Color(0xFF4CAF50)
-        isWrong -> Color(0xFFF44336)
+        isCorrectSelected -> correctColor
+        isWrong -> wrongColor
         else -> baseColor
     }
 
@@ -487,26 +567,31 @@ fun CoursePill(
     text: String,
     modifier: Modifier = Modifier,
     textColor: Color = Color.Black,
+    large: Boolean = false,
+    backgroundColor: Color = Color(0xFFE0E0E0),
     onClick: () -> Unit
 ) {
+    val minHeight = if (large) 60.dp else 40.dp
+    val textStyle = if (large) MaterialTheme.typography.bodyLarge else MaterialTheme.typography.bodyMedium
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 40.dp)
+            .heightIn(min = minHeight)
             .clickable(onClick = onClick),
         shape = CircleShape,
-        color = Color(0xFFE0E0E0),
-        shadowElevation = 0.dp
+        color = backgroundColor,
+        shadowElevation = if (large) 3.dp else 0.dp
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = 18.dp, vertical = if (large) 16.dp else 10.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodyMedium,
+                style = textStyle.copy(fontWeight = FontWeight.SemiBold),
                 color = textColor
             )
         }
