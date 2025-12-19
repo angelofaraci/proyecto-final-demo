@@ -10,9 +10,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -276,6 +277,7 @@ fun LessonsScreen(
 ) {
     val deepBackground = Color(0xFF3C396E)
     val titleColor = Color(0xFFB3D7F5)
+    val cardColor = Color(0xFF4F5CA4)
 
     Column(
         modifier = modifier
@@ -300,15 +302,58 @@ fun LessonsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Box(
+        // Unit title and subtitle to give context to the path
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Unidad 1 - N° Enteros",
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
+                ),
+                color = titleColor
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = "Progreso de lecciones",
+                style = MaterialTheme.typography.bodyMedium,
+                color = titleColor.copy(alpha = 0.85f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Card container for the path to match the Cursos/Unidades style
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f),
-            contentAlignment = Alignment.Center
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = cardColor
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
         ) {
-            LessonPath(onLec1Click = onLec1Click)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LessonPath(onLec1Click = onLec1Click)
+            }
         }
     }
+}
+
+// Simple state for lesson node styling
+private enum class LessonState {
+    COMPLETED,
+    CURRENT,
+    LOCKED
 }
 
 @Composable
@@ -316,82 +361,147 @@ private fun LessonPath(
     modifier: Modifier = Modifier,
     onLec1Click: () -> Unit = {}
 ) {
-    // Normalized (0f..1f) positions along the path
-    val points = listOf(
-        Offset(0.5f, 0.1f),  // top start of vertical segment
-        Offset(0.5f, 0.25f), // corner for Lec 5
-        Offset(0.3f, 0.35f), // corner for Lec 4
-        Offset(0.55f, 0.5f), // corner for Lec 3
-        Offset(0.3f, 0.7f),  // corner for Lec 2
-        Offset(0.55f, 0.9f)  // corner for Lec 1
+    data class LessonPoint(
+        val label: String,
+        val xFraction: Float,
+        val yFraction: Float,
+        val state: LessonState
     )
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val boxWidth = maxWidth
-        val boxHeight = maxHeight
+    // yFraction increases downward. 1 is near the bottom; higher numbers are above,
+    // so you scroll UP to see earlier lessons. Added a bit more vertical range so
+    // the top-most lesson isn't visually cut off.
+    val lessonPoints = listOf(
+        LessonPoint("10", 0.18f, 0.06f, LessonState.COMPLETED),
+        LessonPoint("9",  0.82f, 0.14f, LessonState.COMPLETED),
+        LessonPoint("8",  0.50f, 0.24f, LessonState.COMPLETED),
+        LessonPoint("7",  0.18f, 0.34f, LessonState.COMPLETED),
+        LessonPoint("6",  0.82f, 0.44f, LessonState.COMPLETED),
+        LessonPoint("5",  0.50f, 0.54f, LessonState.COMPLETED),
+        LessonPoint("4",  0.18f, 0.64f, LessonState.COMPLETED),
+        LessonPoint("3",  0.82f, 0.74f, LessonState.COMPLETED),
+        LessonPoint("2",  0.50f, 0.84f, LessonState.COMPLETED),
+        LessonPoint("1",  0.18f, 0.94f, LessonState.CURRENT)
+    )
 
-        // Draw the polyline
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val w = size.width
-            val h = size.height
-            val strokeWidth = 2.dp.toPx()
+    val scrollState = rememberScrollState()
 
-            val absPoints = points.map { Offset(it.x * w, it.y * h) }
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+        ) {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(950.dp) // slightly taller so lesson 10 has padding at the top
+            ) {
+                val w = maxWidth
+                val h = maxHeight
 
-            for (i in 0 until absPoints.lastIndex) {
-                drawLine(
-                    color = Color.Black,
-                    start = absPoints[i],
-                    end = absPoints[i + 1],
-                    strokeWidth = strokeWidth,
-                    cap = StrokeCap.Round
-                )
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val widthPx = size.width
+                    val heightPx = size.height
+                    val strokeWidth = 3.dp.toPx()
+
+                    val pointsPx = lessonPoints.map { lp ->
+                        Offset(
+                            x = lp.xFraction * widthPx,
+                            y = lp.yFraction * heightPx
+                        )
+                    }
+
+                    for (i in 0 until pointsPx.lastIndex) {
+                        drawLine(
+                            color = Color(0xFFB3D7F5),
+                            start = pointsPx[i],
+                            end = pointsPx[i + 1],
+                            strokeWidth = strokeWidth,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                }
+
+                lessonPoints.forEach { lp ->
+                    val isCurrent = lp.state == LessonState.CURRENT
+                    val click = if (isCurrent) onLec1Click else null
+
+                    LessonNode(
+                        label = lp.label,
+                        centerX = w * lp.xFraction,
+                        centerY = h * lp.yFraction,
+                        state = lp.state,
+                        onClick = click
+                    )
+                }
             }
         }
-
-        // Place lesson nodes centered at each vertex (skip very top index 0)
-        LessonNode("Lec 5", points[1], boxWidth, boxHeight)
-        LessonNode("Lec 4", points[2], boxWidth, boxHeight)
-        LessonNode("Lec 3", points[3], boxWidth, boxHeight)
-        LessonNode("Lec 2", points[4], boxWidth, boxHeight)
-        LessonNode("Lec 1", points[5], boxWidth, boxHeight, onClick = onLec1Click)
     }
 }
 
 @Composable
 private fun LessonNode(
     label: String,
-    normalizedPos: Offset,
-    boxWidth: Dp,
-    boxHeight: Dp,
+    centerX: Dp,
+    centerY: Dp,
+    state: LessonState,
     onClick: (() -> Unit)? = null
 ) {
-    val circleSize = 64.dp
+    val baseSize = 64.dp
+    val currentSize = 72.dp
+    val circleSize = if (state == LessonState.CURRENT) currentSize else baseSize
 
+    val backgroundColor: Color
+    val borderColor: Color
+    val textColor: Color
+
+    when (state) {
+        LessonState.COMPLETED -> {
+            backgroundColor = Color(0xFFB3D7F5) // soft blue for completed
+            borderColor = Color.Transparent
+            textColor = Color(0xFF3C396E)
+        }
+        LessonState.CURRENT -> {
+            backgroundColor = Color(0xFFC3DF83) // green highlight for current
+            borderColor = Color.White
+            textColor = Color(0xFF3C396E)
+        }
+        LessonState.LOCKED -> {
+            backgroundColor = Color(0xFF4F5CA4) // same as card but slightly accented
+            borderColor = Color(0xFFB3D7F5)
+            textColor = Color(0xFFB3D7F5)
+        }
+    }
+
+    val clickableModifier = if (onClick != null) {
+        Modifier.clickable(onClick = onClick)
+    } else {
+        Modifier
+    }
+
+    // Only size and offset this node; do NOT fill the whole parent.
     Box(
         modifier = Modifier
-            .offset(
-                x = boxWidth * normalizedPos.x - circleSize / 2,
-                y = boxHeight * normalizedPos.y - circleSize / 2
-            )
+            .offset(x = centerX - circleSize / 2, y = centerY - circleSize / 2)
             .size(circleSize)
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable(onClick = onClick)
-                } else {
-                    Modifier
-                }
-            )
+            .then(clickableModifier)
     ) {
         Surface(
             shape = CircleShape,
-            color = Color(0xFFE0E0E0)
+            color = backgroundColor,
+            border = androidx.compose.foundation.BorderStroke(2.dp, borderColor),
+            shadowElevation = if (state == LessonState.CURRENT) 6.dp else 2.dp
         ) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = label, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = textColor
+                )
             }
         }
     }
