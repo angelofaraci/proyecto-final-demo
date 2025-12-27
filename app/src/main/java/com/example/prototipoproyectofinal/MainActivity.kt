@@ -37,6 +37,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.prototipoproyectofinal.ui.theme.PrototipoProyectoFinalTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 // Simple navigation states for this prototype
 private enum class Screen {
@@ -269,6 +277,7 @@ fun UnitsScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LessonsScreen(
     modifier: Modifier = Modifier,
@@ -279,15 +288,18 @@ fun LessonsScreen(
     val titleColor = Color(0xFFB3D7F5)
     val cardColor = Color(0xFF4F5CA4)
 
+    // State for the full screen theory overlay
+    var isBookTheoryOpen by remember { mutableStateOf(false) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(deepBackground)
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
+        // Back only
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
@@ -296,15 +308,15 @@ fun LessonsScreen(
                 color = titleColor,
                 modifier = Modifier.clickable(onClick = onBackClick)
             )
-
-            // Right-side icon placeholder (stats icon) can be added later if desired
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
-        // Unit title and subtitle to give context to the path
-        Column(
-            modifier = Modifier.fillMaxWidth()
+        // Unit title + book icon aligned on the same row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Unidad 1 - N° Enteros",
@@ -315,14 +327,26 @@ fun LessonsScreen(
                 color = titleColor
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "Progreso de lecciones",
-                style = MaterialTheme.typography.bodyMedium,
-                color = titleColor.copy(alpha = 0.85f)
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                contentDescription = "Libro",
+                tint = titleColor,
+                modifier = Modifier
+                    .size(36.dp)
+                    .clickable {
+                        // FIRST click opens it full screen (no partial sheet)
+                        isBookTheoryOpen = true
+                    }
             )
         }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "Progreso de lecciones",
+            style = MaterialTheme.typography.bodyMedium,
+            color = titleColor.copy(alpha = 0.85f)
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -344,6 +368,194 @@ fun LessonsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 LessonPath(onLec1Click = onLec1Click)
+            }
+        }
+    }
+
+    if (isBookTheoryOpen) {
+        // Simple full-screen overlay (prototype-friendly)
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = deepBackground
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp, vertical = 24.dp)
+            ) {
+                // Top bar: back/close
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "←",
+                        fontSize = 24.sp,
+                        color = titleColor,
+                        modifier = Modifier.clickable { isBookTheoryOpen = false }
+                    )
+
+                    Text(
+                        text = "Teoría",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        ),
+                        color = titleColor
+                    )
+
+                    // symmetrical spacer to keep title centered-ish
+                    Spacer(modifier = Modifier.size(24.dp))
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(containerColor = cardColor),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(20.dp)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            text = "Números enteros",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Los números enteros (\"Z\") son un conjunto de números que incluye:\n" +
+                                "• Los números naturales: 0, 1, 2, 3, …\n" +
+                                "• Sus opuestos (negativos): −1, −2, −3, …\n" +
+                                "\n" +
+                                "Se usan para representar cantidades con dirección o sentido: ganancias/pérdidas, temperaturas bajo cero, pisos bajo tierra, etc.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Recta numérica y comparación",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "En la recta numérica, hacia la derecha los números son mayores y hacia la izquierda son menores.\n" +
+                                "Por eso: −3 < −1 < 0 < 2 < 5.\n" +
+                                "Ojo: entre números negativos, el que está más cerca de 0 es el mayor (por ejemplo, −2 es mayor que −7).",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Valor absoluto",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "El valor absoluto de un entero es su distancia al 0, sin importar el signo.\n" +
+                                "Se escribe |a|. Ejemplos: |−4| = 4, |3| = 3, |0| = 0.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Suma de enteros",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "1) Si tienen el mismo signo, se suman los valores absolutos y se conserva el signo.\n" +
+                                "   • (−3) + (−5) = −(3 + 5) = −8\n" +
+                                "   • 4 + 6 = 10\n" +
+                                "\n" +
+                                "2) Si tienen distinto signo, se restan los valores absolutos y se coloca el signo del número con mayor valor absoluto.\n" +
+                                "   • (−7) + 2 = −(7 − 2) = −5\n" +
+                                "   • 9 + (−4) = 9 − 4 = 5",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Resta de enteros",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Restar un número es lo mismo que sumar su opuesto:\n" +
+                                "a − b = a + (−b).\n" +
+                                "Ejemplos:\n" +
+                                "• 5 − 8 = 5 + (−8) = −3\n" +
+                                "• (−2) − (−6) = (−2) + 6 = 4",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Multiplicación y división (regla de los signos)",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "• (+) × (+) = (+)\n" +
+                                "• (−) × (−) = (+)\n" +
+                                "• (+) × (−) = (−)\n" +
+                                "• (−) × (+) = (−)\n" +
+                                "\n" +
+                                "La misma regla se aplica a la división.\n" +
+                                "Ejemplos:\n" +
+                                "• (−3) × 4 = −12\n" +
+                                "• (−20) ÷ (−5) = 4",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Consejo práctico",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Cuando tengas dudas, dibuja una recta numérica o piensa en situaciones reales (por ejemplo, deudas y dinero). Eso ayuda a entender el signo y el resultado.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
             }
         }
     }
@@ -386,20 +598,20 @@ private fun LessonPath(
 
     val scrollState = rememberScrollState()
 
+    // Fixed container height used for drawing + node placement.
+    val containerHeight = 950.dp
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
         ) {
-            BoxWithConstraints(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(950.dp) // slightly taller so lesson 10 has padding at the top
+                    .height(containerHeight)
             ) {
-                val w = maxWidth
-                val h = maxHeight
-
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val widthPx = size.width
                     val heightPx = size.height
@@ -423,14 +635,19 @@ private fun LessonPath(
                     }
                 }
 
+                // We can't know the exact parent width in dp here without BoxWithConstraints.
+                // Use a conservative width that matches the typical card content area; it still
+                // positions nicely because xFraction is relative.
+                val approxContainerWidth = 320.dp
+
                 lessonPoints.forEach { lp ->
                     val isCurrent = lp.state == LessonState.CURRENT
                     val click = if (isCurrent) onLec1Click else null
 
                     LessonNode(
                         label = lp.label,
-                        centerX = w * lp.xFraction,
-                        centerY = h * lp.yFraction,
+                        centerX = approxContainerWidth * lp.xFraction,
+                        centerY = containerHeight * lp.yFraction,
                         state = lp.state,
                         onClick = click
                     )
