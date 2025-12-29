@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -40,11 +39,20 @@ import com.example.prototipoproyectofinal.ui.theme.PrototipoProyectoFinalTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.graphicsLayer
+import kotlinx.coroutines.delay
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.random.Random
 
 // Simple navigation states for this prototype
 private enum class Screen {
@@ -84,7 +92,8 @@ class MainActivity : ComponentActivity() {
                         )
 
                         Screen.Exercise -> ExerciseScreen(
-                            onBackClick = { currentScreen = Screen.Lessons }
+                            onBackClick = { currentScreen = Screen.Lessons },
+                            onCorrectAnswered = { currentScreen = Screen.Lessons }
                         )
                     }
                 }
@@ -104,7 +113,7 @@ fun CoursesScreen(
 
     // Buttons use #B3D7F5 now
     val buttonColor = Color(0xFFB3D7F5)    // #B3D7F5 shared button color
-    val buttonTextColor = Color(0xFF264939) // dark green for contrast
+    val lessonNumberColor = Color(0xFF3C396E) // match Lecciones numbers
     val titleColor = Color(0xFFB3D7F5)     // use same light blue for title
 
     Column(
@@ -146,7 +155,7 @@ fun CoursesScreen(
                 // All buttons share the same #B3D7F5 background and dark text
                 CoursePill(
                     text = "1er Año",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = onFirstYearClick,
                     large = true,
                     backgroundColor = buttonColor
@@ -154,7 +163,7 @@ fun CoursesScreen(
 
                 CoursePill(
                     text = "2do Año",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = { /* TODO: navigate to 2do Año */ },
                     large = true,
                     backgroundColor = buttonColor
@@ -162,7 +171,7 @@ fun CoursesScreen(
 
                 CoursePill(
                     text = "3er Año",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = { /* TODO: navigate to 3er Año */ },
                     large = true,
                     backgroundColor = buttonColor
@@ -170,7 +179,7 @@ fun CoursesScreen(
 
                 CoursePill(
                     text = "4to Año",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = { /* TODO: navigate to 4to Año */ },
                     large = true,
                     backgroundColor = buttonColor
@@ -178,7 +187,7 @@ fun CoursesScreen(
 
                 CoursePill(
                     text = "5to Año",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = { /* TODO: navigate to 5to Año */ },
                     large = true,
                     backgroundColor = buttonColor
@@ -199,7 +208,7 @@ fun UnitsScreen(
     val cardColor = Color(0xFF4F5CA4)
     val titleColor = Color(0xFFB3D7F5)
     val buttonColor = Color(0xFFB3D7F5)
-    val buttonTextColor = Color(0xFF264939)
+    val lessonNumberColor = Color(0xFF3C396E) // match Lecciones numbers
 
     Column(
         modifier = modifier
@@ -251,7 +260,7 @@ fun UnitsScreen(
             ) {
                 CoursePill(
                     text = "Unidad 1 - N° Enteros",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = onFirstUnitClick,
                     large = true,
                     backgroundColor = buttonColor
@@ -259,7 +268,7 @@ fun UnitsScreen(
 
                 CoursePill(
                     text = "Unidad 2 - Ecuaciones",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = { /* TODO: navigate to Unidad 2 */ },
                     large = true,
                     backgroundColor = buttonColor
@@ -267,7 +276,7 @@ fun UnitsScreen(
 
                 CoursePill(
                     text = "Unidad 3 - Geometría",
-                    textColor = buttonTextColor,
+                    textColor = lessonNumberColor,
                     onClick = { /* TODO: navigate to Unidad 3 */ },
                     large = true,
                     backgroundColor = buttonColor
@@ -727,7 +736,8 @@ private fun LessonNode(
 @Composable
 fun ExerciseScreen(
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onCorrectAnswered: () -> Unit = {}
 ) {
     val correctAnswer = 5
     var selectedAnswer by remember { mutableStateOf<Int?>(null) }
@@ -735,156 +745,240 @@ fun ExerciseScreen(
 
     val isCorrectAnswered = selectedAnswer == correctAnswer
 
+    // When the user answers correctly, play a short success animation and auto-return.
+    var isSuccessAnimating by remember { mutableStateOf(false) }
+
+    // How long we keep the success state visible before navigating back.
+    // (Keep this >= the confetti tween duration so the effect completes.)
+    val successAutoReturnDelayMs = 1700L
+
     // Reset wrong answer feedback after a short delay
     LaunchedEffect(lastWrongAnswer) {
         if (lastWrongAnswer != null) {
-            kotlinx.coroutines.delay(600)
+            delay(600)
             lastWrongAnswer = null
         }
     }
 
+    // Trigger the success flow only once when we enter the "correct" state.
+    LaunchedEffect(isCorrectAnswered) {
+        if (isCorrectAnswered) {
+            isSuccessAnimating = true
+            delay(successAutoReturnDelayMs)
+            onCorrectAnswered()
+        }
+    }
+
+    val interactionsEnabled = !isSuccessAnimating && !isCorrectAnswered
+
     val deepBackground = Color(0xFF3C396E)
     val titleColor = Color(0xFFB3D7F5)
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(deepBackground)
             .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = "←",
-                fontSize = 24.sp,
-                color = titleColor,
-                modifier = Modifier.clickable(onClick = onBackClick)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "Selecciona el recuadro correcto",
-            style = MaterialTheme.typography.titleMedium,
-            color = titleColor,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Animate the equation when the correct answer is revealed
-        val equationScale by animateFloatAsState(
-            targetValue = if (isCorrectAnswered) 1.05f else 1f,
-            label = "equationScale"
-        )
-        val equationAlpha by animateFloatAsState(
-            targetValue = if (isCorrectAnswered) 1f else 0.9f,
-            label = "equationAlpha"
-        )
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .graphicsLayer(
-                    scaleX = equationScale,
-                    scaleY = equationScale,
-                    alpha = equationAlpha
-                ),
-            shape = RoundedCornerShape(8.dp),
-            color = Color(0xFF4F5CA4),
-            shadowElevation = 0.dp
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isCorrectAnswered) "2 + 3 = 5" else "2 + 3 = ?",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White
+                    text = "←",
+                    fontSize = 24.sp,
+                    color = titleColor,
+                    modifier = Modifier.clickable(enabled = !isSuccessAnimating, onClick = onBackClick)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Selecciona el recuadro correcto",
+                style = MaterialTheme.typography.titleMedium,
+                color = titleColor,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Animate the equation when the correct answer is revealed
+            val equationScale by animateFloatAsState(
+                targetValue = if (isCorrectAnswered) 1.05f else 1f,
+                label = "equationScale"
+            )
+            val equationAlpha by animateFloatAsState(
+                targetValue = if (isCorrectAnswered) 1f else 0.9f,
+                label = "equationAlpha"
+            )
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp)
+                    .graphicsLayer(
+                        scaleX = equationScale,
+                        scaleY = equationScale,
+                        alpha = equationAlpha
+                    ),
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFF4F5CA4),
+                shadowElevation = 0.dp
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (isCorrectAnswered) "2 + 3 = 5" else "2 + 3 = ?",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            val answers = listOf(5, 6, 7, 8)
+
+            answers.forEach { value ->
+                val isCorrect = value == correctAnswer
+                val isSelectedCorrect = selectedAnswer == value && isCorrect
+                val isWrong = lastWrongAnswer == value
+
+                AnswerButton(
+                    value = value,
+                    isCorrectSelected = isSelectedCorrect,
+                    isWrong = isWrong,
+                    enabled = interactionsEnabled
+                ) {
+                    if (!interactionsEnabled) return@AnswerButton
+
+                    if (isCorrect) {
+                        selectedAnswer = value
+                    } else {
+                        lastWrongAnswer = value
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        SuccessOverlay(
+            visible = isSuccessAnimating,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+@Composable
+private fun SuccessOverlay(
+    visible: Boolean,
+    modifier: Modifier = Modifier
+) {
+    if (!visible) return
+
+    // Simple pulse/bounce using animate*AsState (prototype-friendly).
+    val iconScale by animateFloatAsState(
+        targetValue = 1.12f,
+        label = "successIconScale"
+    )
+    val iconAlpha by animateFloatAsState(
+        targetValue = 1f,
+        label = "successIconAlpha"
+    )
+
+    // Very simple confetti: a fixed set of particles that spreads outward.
+    data class Particle(
+        val angleRad: Float,
+        val speed: Float,
+        val sizePx: Float,
+        val color: Color
+    )
+
+    val particles = remember {
+        val colors = listOf(
+            Color(0xFFB3D7F5),
+            Color(0xFFC3DF83),
+            Color(0xFFFFD166),
+            Color(0xFFEF476F)
+        )
+        List(26) {
+            Particle(
+                angleRad = (Random.nextFloat() * (2f * PI.toFloat())),
+                speed = 140f + Random.nextFloat() * 260f,
+                sizePx = 8f + Random.nextFloat() * 10f,
+                color = colors.random()
+            )
+        }
+    }
+
+    val progress = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(Unit) {
+        progress.snapTo(0f)
+        progress.animateTo(
+            targetValue = 1f,
+            // Make the confetti linger a bit longer.
+            animationSpec = androidx.compose.animation.core.tween(durationMillis = 1700)
+        )
+    }
+
+    // Blocks taps while visible.
+    Box(
+        modifier = modifier
+            .pointerInteropFilter { true },
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val t = progress.value
+            val alpha = (1f - (t * 0.7f)).coerceIn(0f, 1f)
+
+            particles.forEach { p ->
+                val distance = p.speed * t
+                val x = center.x + cos(p.angleRad) * distance
+                val y = center.y + sin(p.angleRad) * distance
+
+                drawCircle(
+                    color = p.color.copy(alpha = alpha),
+                    radius = p.sizePx,
+                    center = Offset(x, y)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        val answers = listOf(5, 6, 7, 8)
-
-        answers.forEach { value ->
-            val isCorrect = value == correctAnswer
-            val isSelectedCorrect = selectedAnswer == value && isCorrect
-            val isWrong = lastWrongAnswer == value
-
-            AnswerButton(
-                value = value,
-                isCorrectSelected = isSelectedCorrect,
-                isWrong = isWrong,
-                enabled = !isCorrectAnswered
-            ) {
-                if (isCorrectAnswered) return@AnswerButton
-
-                if (isCorrect) {
-                    selectedAnswer = value
-                } else {
-                    lastWrongAnswer = value
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-    }
-}
-
-@Composable
-private fun AnswerButton(
-    value: Int,
-    isCorrectSelected: Boolean,
-    isWrong: Boolean,
-    enabled: Boolean,
-    onClick: () -> Unit
-) {
-    // Use #8DBC69 for correct, #C76562 for wrong, base dark for neutral
-    val baseColor = Color(0xFF333333)
-    val correctColor = Color(0xFF8DBC69)
-    val wrongColor = Color(0xFFC76562)
-
-    val targetColor = when {
-        isCorrectSelected -> correctColor
-        isWrong -> wrongColor
-        else -> baseColor
-    }
-
-    val backgroundColor by animateColorAsState(targetValue = targetColor, label = "answerColor")
-
-    val targetScale = if (isCorrectSelected) 1.05f else 1f
-    val scale by animateFloatAsState(targetValue = targetScale, label = "answerScale")
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .graphicsLayer(scaleX = scale, scaleY = scale)
-            .then(
-                if (enabled) Modifier.clickable(onClick = onClick) else Modifier
-            ),
-        shape = RoundedCornerShape(8.dp),
-        color = backgroundColor,
-        shadowElevation = 0.dp
-    ) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+        // Center check
+        val bg = Color(0xFF8DBC69)
+        Surface(
+            shape = CircleShape,
+            color = bg.copy(alpha = 0.16f),
+            border = BorderStroke(2.dp, bg.copy(alpha = 0.65f)),
+            shadowElevation = 0.dp
         ) {
-            Text(
-                text = value.toString(),
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.White
-            )
+            Box(
+                modifier = Modifier
+                    .padding(18.dp)
+                    .graphicsLayer(
+                        scaleX = iconScale,
+                        scaleY = iconScale,
+                        alpha = iconAlpha
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = "Correcto",
+                    tint = Color(0xFF8DBC69),
+                    modifier = Modifier.size(74.dp)
+                )
+            }
         }
     }
 }
@@ -920,6 +1014,53 @@ fun CoursePill(
                 text = text,
                 style = textStyle.copy(fontWeight = FontWeight.SemiBold),
                 color = textColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun AnswerButton(
+    value: Int,
+    isCorrectSelected: Boolean,
+    isWrong: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    val defaultColor = Color(0xFFB3D7F5)
+    val correctColor = Color(0xFFC3DF83)
+    val wrongColor = Color(0xFFEF476F)
+
+    val backgroundTarget = when {
+        isCorrectSelected -> correctColor
+        isWrong -> wrongColor
+        else -> defaultColor
+    }
+
+    val containerColor by animateColorAsState(
+        targetValue = backgroundTarget,
+        label = "answerContainerColor"
+    )
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = containerColor,
+        shadowElevation = 2.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 14.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = value.toString(),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color(0xFF3C396E)
             )
         }
     }
