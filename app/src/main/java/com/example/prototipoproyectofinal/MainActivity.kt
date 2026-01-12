@@ -4,6 +4,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -20,9 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -44,11 +51,12 @@ import kotlinx.coroutines.delay
 // --- PALETA DE COLORES "GAMER/NEÓN" ---
 val DarkBackground = Color(0xFF0B0B1E)   // Fondo casi negro/azul
 val SurfaceColor = Color(0xFF1E1E3F)     // Color de las tarjetas
-val NeonBlue = Color(0xFF00BFFF)         // Color principal activo (Cyan eléctrico)
+val NeonBlue = Color(0xFF2196F3)         // Azul actualizado
 val NeonGreen = Color(0xFF00E676)        // Éxito
 val LockedColor = Color(0xFF2D2D5A)      // Elementos bloqueados
 val TextWhite = Color(0xFFFFFFFF)
 val TextGray = Color(0xFF8F9BB3)
+val NeonYellow = Color(0xFFDEA321)
 
 // --- DATA CLASSES SIMPLES ---
 data class CourseData(val title: String, val desc: String, val progress: Float, val icon: String, val isActive: Boolean, val cardColor: Color? = null)
@@ -76,22 +84,34 @@ class MainActivity : ComponentActivity() {
                 ) {
                     var currentScreen by remember { mutableStateOf(Screen.Courses) }
 
-                    when (currentScreen) {
-                        Screen.Courses -> CoursesScreen(
-                            onFirstYearClick = { currentScreen = Screen.Units }
-                        )
-                        Screen.Units -> UnitsScreen(
-                            onBackClick = { currentScreen = Screen.Courses },
-                            onFirstUnitClick = { currentScreen = Screen.Lessons }
-                        )
-                        Screen.Lessons -> LessonsScreen(
-                            onBackClick = { currentScreen = Screen.Units },
-                            onLec1Click = { currentScreen = Screen.Exercise }
-                        )
-                        Screen.Exercise -> ExerciseScreen(
-                            onBackClick = { currentScreen = Screen.Lessons },
-                            onCorrectAnswered = { currentScreen = Screen.Lessons }
-                        )
+                    AnimatedContent(
+                        targetState = currentScreen,
+                        label = "screen-transition",
+                        transitionSpec = {
+                            if (targetState.ordinal > initialState.ordinal) {
+                                slideInHorizontally { width -> width } togetherWith slideOutHorizontally { width -> -width }
+                            } else {
+                                slideInHorizontally { width -> -width } togetherWith slideOutHorizontally { width -> width }
+                            }
+                        }
+                    ) { screen ->
+                        when (screen) {
+                            Screen.Courses -> CoursesScreen(
+                                onFirstYearClick = { currentScreen = Screen.Units }
+                            )
+                            Screen.Units -> UnitsScreen(
+                                onBackClick = { currentScreen = Screen.Courses },
+                                onFirstUnitClick = { currentScreen = Screen.Lessons }
+                            )
+                            Screen.Lessons -> LessonsScreen(
+                                onBackClick = { currentScreen = Screen.Units },
+                                onLec1Click = { currentScreen = Screen.Exercise }
+                            )
+                            Screen.Exercise -> ExerciseScreen(
+                                onBackClick = { currentScreen = Screen.Lessons },
+                                onCorrectAnswered = { currentScreen = Screen.Lessons }
+                            )
+                        }
                     }
                 }
             }
@@ -108,7 +128,7 @@ fun CoursesScreen(
     val courses = listOf(
         CourseData("1º Año", "Álgebra y Geometría", 1.0f, "📐", false, cardColor = Color(0xFF1E3F35)),
         CourseData("2º Año", "Funciones Básicas", 1.0f, "📈", false, cardColor = Color(0xFF1E3F35)),
-        CourseData("3º Año", "Ecuaciones Cuadráticas", 0.4f, "🧪", true, cardColor = Color(0xFF483D8B)), // Activo
+        CourseData("3º Año", "Función Lineal y Sistemas", 0.4f, "🧪", true, cardColor = Color(0xFF483D8B)), // Activo
         CourseData("4º Año", "Trigonometría", 0.0f, "📐", false),
         CourseData("5º Año", "Cálculo y Límites", 0.0f, "♾️", false)
     )
@@ -147,9 +167,9 @@ fun CoursesScreen(
 
 @Composable
 fun CourseCard(data: CourseData, onClick: () -> Unit) {
-    val borderColor = if (data.progress >= 1f) NeonGreen else if (data.isActive) NeonBlue else Color.White.copy(alpha = 0.05f)
+    val borderColor = if (data.progress >= 1f) NeonGreen else if (data.isActive) NeonYellow else Color.White.copy(alpha = 0.05f)
     val elevation = if (data.isActive) 16.dp else 0.dp
-    val shadowColor = if (data.isActive) NeonBlue else Color.Transparent
+    val shadowColor = if (data.isActive) NeonYellow else Color.Transparent
 
     Surface(
         modifier = Modifier
@@ -198,7 +218,7 @@ fun CourseCard(data: CourseData, onClick: () -> Unit) {
 
 @Composable
 fun NeonProgressBar(progress: Float, isActive: Boolean) {
-    val barColor = if (isActive) NeonBlue else Color.Gray
+    val barColor = if (isActive) NeonYellow else Color.Gray
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -222,9 +242,9 @@ fun UnitsScreen(
     onFirstUnitClick: () -> Unit
 ) {
     val units = listOf(
-        UnitData("1. Números Enteros", LessonState.COMPLETED),
-        UnitData("2. Ecuaciones", LessonState.ACTIVE),
-        UnitData("3. Geometría", LessonState.LOCKED),
+        UnitData("1. Función Lineal", LessonState.ACTIVE),
+        UnitData("2. Sist. Ecuaciones", LessonState.LOCKED),
+        UnitData("3. Inecuaciones", LessonState.LOCKED), // Agregado como extra para completar diseño
         UnitData("4. Polinomios", LessonState.LOCKED)
     )
 
@@ -272,7 +292,7 @@ fun UnitRow(unit: UnitData, onClick: () -> Unit) {
         LessonState.LOCKED -> Color.Transparent
     }
 
-    val borderColor = if (isActive) NeonBlue else Color.White.copy(alpha = 0.1f)
+    val borderColor = if (isActive) NeonYellow else Color.White.copy(alpha = 0.1f)
 
     Surface(
         modifier = Modifier
@@ -308,7 +328,7 @@ fun UnitRow(unit: UnitData, onClick: () -> Unit) {
                 contentDescription = null,
                 tint = when(unit.state) {
                     LessonState.COMPLETED -> NeonGreen
-                    LessonState.ACTIVE -> NeonBlue
+                    LessonState.ACTIVE -> NeonYellow
                     LessonState.LOCKED -> TextGray.copy(alpha = 0.5f)
                 }
             )
@@ -341,8 +361,8 @@ fun LessonsScreen(
                     modifier = Modifier.clickable(onClick = onBackClick)
                 )
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("N° Enteros", color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("Unidad 1", color = NeonBlue, fontSize = 12.sp)
+                    Text("Función Lineal", color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Unidad 1", color = NeonYellow, fontSize = 12.sp)
                 }
                 IconButton(onClick = { isBookTheoryOpen = true }) {
                     Icon(Icons.AutoMirrored.Outlined.MenuBook, contentDescription = "Teoría", tint = TextWhite)
@@ -354,7 +374,11 @@ fun LessonsScreen(
         }
 
         // Overlay de Teoría (Simple)
-        if (isBookTheoryOpen) {
+        AnimatedVisibility(
+            visible = isBookTheoryOpen,
+            enter = slideInHorizontally { width -> width },
+            exit = slideOutHorizontally { width -> width }
+        ) {
             TheoryOverlay(onClose = { isBookTheoryOpen = false })
         }
     }
@@ -413,7 +437,7 @@ fun TheoryOverlay(onClose: () -> Unit) {
                         .verticalScroll(rememberScrollState())
                 ) {
                     Text(
-                        text = "Números enteros",
+                        text = "Función Lineal",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -422,122 +446,78 @@ fun TheoryOverlay(onClose: () -> Unit) {
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = "Los números enteros (\"Z\") son un conjunto de números que incluye:\n" +
-                                "• Los números naturales: 0, 1, 2, 3, …\n" +
-                                "• Sus opuestos (negativos): −1, −2, −3, …\n" +
-                                "\n" +
-                                "Se usan para representar cantidades con dirección o sentido: ganancias/pérdidas, temperaturas bajo cero, pisos bajo tierra, etc.",
+                        text = "Una función lineal es una relación entre dos variables (x, y) cuya gráfica es una línea recta. Su fórmula general es:\n" +
+                                "y = mx + b\n\n" +
+                                "Donde:\n" +
+                                "• \'y\' es la variable dependiente.\n" +
+                                "• \'x\' es la variable independiente.\n" +
+                                "• \'m\' es la pendiente.\n" +
+                                "• \'b\' es la ordenada al origen.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Recta numérica y comparación",
+                        text = "Pendiente (m)",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = NeonYellow
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "En la recta numérica, hacia la derecha los números son mayores y hacia la izquierda son menores.\n" +
-                                "Por eso: −3 < −1 < 0 < 2 < 5.\n" +
-                                "Ojo: entre números negativos, el que está más cerca de 0 es el mayor (por ejemplo, −2 es mayor que −7).",
+                        text = "La pendiente determina la inclinación de la recta.\n" +
+                                "• Si m > 0, la recta es creciente (sube de izquierda a derecha).\n" +
+                                "• Si m < 0, la recta es decreciente (baja de izquierda a derecha).\n" +
+                                "• Si m = 0, la recta es horizontal.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Valor absoluto",
+                        text = "Ordenada al Origen (b)",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = NeonYellow
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "El valor absoluto de un entero es su distancia al 0, sin importar el signo.\n" +
-                                "Se escribe |a|. Ejemplos: |−4| = 4, |3| = 3, |0| = 0.",
+                        text = "Es el punto donde la recta corta el eje Y. Su coordenada es siempre (0, b).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Suma de enteros",
+                        text = "Raíz o Cero de la Función",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = NeonYellow
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "1) Si tienen el mismo signo, se suman los valores absolutos y se conserva el signo.\n" +
-                                "   • (−3) + (−5) = −(3 + 5) = −8\n" +
-                                "   • 4 + 6 = 10\n" +
-                                "\n" +
-                                "2) Si tienen distinto signo, se restan los valores absolutos y se coloca el signo del número con mayor valor absoluto.\n" +
-                                "   • (−7) + 2 = −(7 − 2) = −5\n" +
-                                "   • 9 + (−4) = 9 − 4 = 5",
+                        text = "Es el punto donde la recta corta el eje X. Se calcula igualando la función a cero y despejando x (y=0). Su coordenada es (-b/m, 0).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Resta de enteros",
+                        text = "Rectas Paralelas y Perpendiculares",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White
+                        color = NeonYellow
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Restar un número es lo mismo que sumar su opuesto:\n" +
-                                "a − b = a + (−b).\n" +
-                                "Ejemplos:\n" +
-                                "• 5 − 8 = 5 + (−8) = −3\n" +
-                                "• (−2) − (−6) = (−2) + 6 = 4",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Multiplicación y división (regla de los signos)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "• (+) × (+) = (+)\n" +
-                                "• (−) × (−) = (+)\n" +
-                                "• (+) × (−) = (−)\n" +
-                                "• (−) × (+) = (−)\n" +
-                                "\n" +
-                                "La misma regla se aplica a la división.\n" +
-                                "Ejemplos:\n" +
-                                "• (−3) × 4 = −12\n" +
-                                "• (−20) ÷ (−5) = 4",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Consejo práctico",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Cuando tengas dudas, dibuja una recta numérica o piensa en situaciones reales (por ejemplo, deudas y dinero). Eso ayuda a entender el signo y el resultado.",
+                        text = "Dadas dos rectas y = m1x + b1 e y = m2x + b2:\n" +
+                                "• Son paralelas si sus pendientes son iguales (m1 = m2).\n" +
+                                "• Son perpendiculares si sus pendientes son opuestas e inversas (m1 = -1/m2).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.White
                     )
@@ -555,9 +535,9 @@ private fun LessonPath(onLec1Click: () -> Unit) {
     data class Point(val xOffset: Dp, val state: LessonState, val label: String)
 
     val lessons = listOf(
-        Point(0.dp, LessonState.ACTIVE, "1"),
-        Point(60.dp, LessonState.LOCKED, "2"),
-        Point(30.dp, LessonState.LOCKED, "3"),
+        Point(0.dp, LessonState.COMPLETED, "1"),
+        Point(60.dp, LessonState.COMPLETED, "2"),
+        Point(30.dp, LessonState.ACTIVE, "3"),
         Point((-40).dp, LessonState.LOCKED, "4"),
         Point((-60).dp, LessonState.LOCKED, "5"),
         Point(0.dp, LessonState.LOCKED, "BOSS")
@@ -566,11 +546,12 @@ private fun LessonPath(onLec1Click: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         // Dibujamos la línea curva de fondo
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val pathColor = Color(0xFF2D2D5A)
+            val lockedPathColor = Color(0xFF2D2D5A)
+            val unlockedPathColor = NeonGreen
+            val activePathColor = NeonYellow
             val strokeWidth = 8.dp.toPx()
 
             // Lógica simplificada de dibujo de línea (ZigZag vertical)
-            // En una app real usaríamos Path cubicTo para curvas suaves
             val centerX = size.width / 2
             val startY = 100.dp.toPx()
             val stepY = 120.dp.toPx()
@@ -580,6 +561,12 @@ private fun LessonPath(onLec1Click: () -> Unit) {
                 val currentY = startY + (i * stepY)
                 val nextX = centerX + lessons[i+1].xOffset.toPx()
                 val nextY = startY + ((i+1) * stepY)
+
+                val pathColor = when {
+                    lessons[i].state == LessonState.COMPLETED && lessons[i+1].state == LessonState.ACTIVE -> activePathColor
+                    lessons[i].state == LessonState.COMPLETED && lessons[i+1].state == LessonState.COMPLETED -> unlockedPathColor
+                    else -> lockedPathColor
+                }
 
                 drawLine(
                     color = pathColor,
@@ -597,13 +584,13 @@ private fun LessonPath(onLec1Click: () -> Unit) {
             contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            itemsIndexed(lessons) { index, lesson ->
+            items(lessons) { lesson ->
                 Box(
                     modifier = Modifier
                         .offset(x = lesson.xOffset)
                         .padding(bottom = 40.dp) // Espacio vertical entre nodos
                 ) {
-                    MapNode(lesson.state, lesson.label, onClick = { if(index == 0) onLec1Click() })
+                    MapNode(lesson.state, lesson.label, onClick = { if (lesson.state == LessonState.ACTIVE) onLec1Click() })
                 }
             }
         }
@@ -616,8 +603,14 @@ fun MapNode(state: LessonState, label: String, onClick: () -> Unit) {
     // Colores dinámicos
     val color = when (state) {
         LessonState.COMPLETED -> NeonGreen
-        LessonState.ACTIVE -> NeonBlue
+        LessonState.ACTIVE -> NeonYellow
         LessonState.LOCKED -> LockedColor
+    }
+
+    val borderColor = when (state) {
+        LessonState.ACTIVE -> Color.White
+        LessonState.COMPLETED -> Color.White.copy(alpha = 0.7f)
+        else -> Color.Transparent
     }
 
     val shadowRadius = if (state == LessonState.ACTIVE) 15.dp else 0.dp
@@ -627,7 +620,7 @@ fun MapNode(state: LessonState, label: String, onClick: () -> Unit) {
             .size(size)
             .shadow(shadowRadius, CircleShape, spotColor = color)
             .background(color, CircleShape)
-            .border(4.dp, if (state == LessonState.ACTIVE) Color.White else Color.Transparent, CircleShape)
+            .border(4.dp, borderColor, CircleShape)
             .clickable(enabled = state != LessonState.LOCKED, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -636,7 +629,7 @@ fun MapNode(state: LessonState, label: String, onClick: () -> Unit) {
         } else if (label == "BOSS") {
             Icon(Icons.Default.Star, contentDescription = null, tint = Color.White)
         } else {
-            Text(text = label, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if(state==LessonState.ACTIVE) Color.White else Color(0xFF121230))
+            Text(text = label, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if(state==LessonState.ACTIVE) Color.Black else Color(0xFF121230))
         }
     }
 }
@@ -664,24 +657,36 @@ fun ExerciseScreen(
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Barra superior
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("❌", modifier = Modifier.clickable { onBackClick() }, fontSize = 24.sp)
-            NeonProgressBar(progress = 0.5f, isActive = true) // Barra de vida/progreso
-            Text("❤️ 3", color = Color.Red, fontWeight = FontWeight.Bold)
+        // Barra superior con botón de atrás y vidas
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                "❌",
+                modifier = Modifier.clickable { onBackClick() },
+                fontSize = 24.sp,
+                color = TextWhite
+            )
+            Row {
+                Icon(Icons.Filled.Favorite, contentDescription = "Life", tint = Color.Red)
+                Icon(Icons.Filled.Favorite, contentDescription = "Life", tint = Color.Red)
+                Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Lost life", tint = TextGray)
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
         // Pregunta
-        Text("Resuelve:", color = TextGray, fontSize = 18.sp)
+        Text("Calcula la pendiente:", color = TextGray, fontSize = 18.sp)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("2 + 3 = ?", color = TextWhite, fontSize = 48.sp, fontWeight = FontWeight.Bold)
+        Text("y = 3x - 2", color = TextWhite, fontSize = 48.sp, fontWeight = FontWeight.Bold)
 
         Spacer(modifier = Modifier.weight(1f))
 
         // Opciones
-        val options = listOf(4, 5, 6, 8)
+        val options = listOf(3, -2, 2, -3)
         options.chunked(2).forEach { rowOptions ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 rowOptions.forEach { opt ->
@@ -691,7 +696,7 @@ fun ExerciseScreen(
                     Button(
                         onClick = {
                             selectedAnswer = opt
-                            if (opt == 5) isSuccess = true
+                            if (opt == 3) isSuccess = true
                         },
                         modifier = Modifier
                             .weight(1f)
