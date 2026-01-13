@@ -2,4 +2,10 @@
 <resources>
 
     <style name="Theme.PrototipoProyectoFinal" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0B0B1E</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_image</item>
+        <item name="postSplashScreenTheme">@style/Theme.PrototipoProyectoFinal</item>
+    </style>
 </resources>

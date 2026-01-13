@@ -4,20 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,33 +23,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.prototipoproyectofinal.ui.theme.PrototipoProyectoFinalTheme
-import kotlinx.coroutines.delay
 
 // --- PALETA DE COLORES "GAMER/NEÓN" ---
 val DarkBackground = Color(0xFF0B0B1E)   // Fondo casi negro/azul
 val SurfaceColor = Color(0xFF1E1E3F)     // Color de las tarjetas
-val NeonBlue = Color(0xFF2196F3)         // Azul actualizado
 val NeonGreen = Color(0xFF00E676)        // Éxito
 val LockedColor = Color(0xFF2D2D5A)      // Elementos bloqueados
 val TextWhite = Color(0xFFFFFFFF)
@@ -69,6 +58,7 @@ enum class LessonState { COMPLETED, ACTIVE, LOCKED }
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installSplashScreen()
         enableEdgeToEdge()
         setContent {
             PrototipoProyectoFinalTheme {
@@ -299,7 +289,7 @@ fun UnitRow(unit: UnitData, onClick: () -> Unit) {
             .fillMaxWidth()
             .height(80.dp)
             .clickable(enabled = !isLocked, onClick = onClick)
-            .graphicsLayer {
+            .graphicsLayer { 
                 if(isActive) { shadowElevation = 10f }
             },
         shape = RoundedCornerShape(16.dp),
@@ -449,80 +439,13 @@ fun TheoryOverlay(onClose: () -> Unit) {
                         text = "Una función lineal es una relación entre dos variables (x, y) cuya gráfica es una línea recta. Su fórmula general es:\n" +
                                 "y = mx + b\n\n" +
                                 "Donde:\n" +
-                                "• \'y\' es la variable dependiente.\n" +
-                                "• \'x\' es la variable independiente.\n" +
-                                "• \'m\' es la pendiente.\n" +
-                                "• \'b\' es la ordenada al origen.",
+                                "• 'y' es la variable dependiente.\n" +
+                                "• 'x' es la variable independiente.\n" +
+                                "• 'm' es la pendiente.\n" +
+                                "• 'b' es la ordenada al origen.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
+                        color = TextGray
                     )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Pendiente (m)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = NeonYellow
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "La pendiente determina la inclinación de la recta.\n" +
-                                "• Si m > 0, la recta es creciente (sube de izquierda a derecha).\n" +
-                                "• Si m < 0, la recta es decreciente (baja de izquierda a derecha).\n" +
-                                "• Si m = 0, la recta es horizontal.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Ordenada al Origen (b)",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = NeonYellow
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Es el punto donde la recta corta el eje Y. Su coordenada es siempre (0, b).",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Raíz o Cero de la Función",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = NeonYellow
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Es el punto donde la recta corta el eje X. Se calcula igualando la función a cero y despejando x (y=0). Su coordenada es (-b/m, 0).",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Rectas Paralelas y Perpendiculares",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = NeonYellow
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Dadas dos rectas y = m1x + b1 e y = m2x + b2:\n" +
-                                "• Son paralelas si sus pendientes son iguales (m1 = m2).\n" +
-                                "• Son perpendiculares si sus pendientes son opuestas e inversas (m1 = -1/m2).",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -530,203 +453,31 @@ fun TheoryOverlay(onClose: () -> Unit) {
 }
 
 @Composable
-private fun LessonPath(onLec1Click: () -> Unit) {
-    // Definimos los puntos del camino
-    data class Point(val xOffset: Dp, val state: LessonState, val label: String)
-
-    val lessons = listOf(
-        Point(0.dp, LessonState.COMPLETED, "1"),
-        Point(60.dp, LessonState.COMPLETED, "2"),
-        Point(30.dp, LessonState.ACTIVE, "3"),
-        Point((-40).dp, LessonState.LOCKED, "4"),
-        Point((-60).dp, LessonState.LOCKED, "5"),
-        Point(0.dp, LessonState.LOCKED, "BOSS")
-    )
-
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        // Dibujamos la línea curva de fondo
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val lockedPathColor = Color(0xFF2D2D5A)
-            val unlockedPathColor = NeonGreen
-            val activePathColor = NeonYellow
-            val strokeWidth = 8.dp.toPx()
-
-            // Lógica simplificada de dibujo de línea (ZigZag vertical)
-            val centerX = size.width / 2
-            val startY = 100.dp.toPx()
-            val stepY = 120.dp.toPx()
-
-            for (i in 0 until lessons.size - 1) {
-                val currentX = centerX + lessons[i].xOffset.toPx()
-                val currentY = startY + (i * stepY)
-                val nextX = centerX + lessons[i+1].xOffset.toPx()
-                val nextY = startY + ((i+1) * stepY)
-
-                val pathColor = when {
-                    lessons[i].state == LessonState.COMPLETED && lessons[i+1].state == LessonState.ACTIVE -> activePathColor
-                    lessons[i].state == LessonState.COMPLETED && lessons[i+1].state == LessonState.COMPLETED -> unlockedPathColor
-                    else -> lockedPathColor
-                }
-
-                drawLine(
-                    color = pathColor,
-                    start = Offset(currentX, currentY),
-                    end = Offset(nextX, nextY),
-                    strokeWidth = strokeWidth,
-                    cap = StrokeCap.Round
-                )
-            }
-        }
-
-        // Dibujamos los nodos interactivos
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = 80.dp, bottom = 100.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            items(lessons) { lesson ->
-                Box(
-                    modifier = Modifier
-                        .offset(x = lesson.xOffset)
-                        .padding(bottom = 40.dp) // Espacio vertical entre nodos
-                ) {
-                    MapNode(lesson.state, lesson.label, onClick = { if (lesson.state == LessonState.ACTIVE) onLec1Click() })
-                }
-            }
+fun LessonPath(onLec1Click: () -> Unit) {
+    // Placeholder implementation
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Button(onClick = onLec1Click) {
+            Text("Go to Exercise")
         }
     }
 }
 
 @Composable
-fun MapNode(state: LessonState, label: String, onClick: () -> Unit) {
-    val size = 70.dp
-    // Colores dinámicos
-    val color = when (state) {
-        LessonState.COMPLETED -> NeonGreen
-        LessonState.ACTIVE -> NeonYellow
-        LessonState.LOCKED -> LockedColor
-    }
-
-    val borderColor = when (state) {
-        LessonState.ACTIVE -> Color.White
-        LessonState.COMPLETED -> Color.White.copy(alpha = 0.7f)
-        else -> Color.Transparent
-    }
-
-    val shadowRadius = if (state == LessonState.ACTIVE) 15.dp else 0.dp
-
-    Box(
-        modifier = Modifier
-            .size(size)
-            .shadow(shadowRadius, CircleShape, spotColor = color)
-            .background(color, CircleShape)
-            .border(4.dp, borderColor, CircleShape)
-            .clickable(enabled = state != LessonState.LOCKED, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        if (state == LessonState.LOCKED) {
-            Icon(Icons.Default.Lock, contentDescription = null, tint = Color.White.copy(alpha = 0.3f))
-        } else if (label == "BOSS") {
-            Icon(Icons.Default.Star, contentDescription = null, tint = Color.White)
-        } else {
-            Text(text = label, fontWeight = FontWeight.Bold, fontSize = 20.sp, color = if(state==LessonState.ACTIVE) Color.Black else Color(0xFF121230))
-        }
-    }
-}
-
-// --- PANTALLA 4: EJERCICIO (GAMEPLAY) ---
-@Composable
-fun ExerciseScreen(
-    modifier: Modifier = Modifier,
-    onBackClick: () -> Unit,
-    onCorrectAnswered: () -> Unit
-) {
-    var selectedAnswer by remember { mutableStateOf<Int?>(null) }
-    var isSuccess by remember { mutableStateOf(false) }
-
-    LaunchedEffect(isSuccess) {
-        if (isSuccess) {
-            delay(1500)
-            onCorrectAnswered()
-        }
-    }
-
+fun ExerciseScreen(onBackClick: () -> Unit, onCorrectAnswered: () -> Unit) {
+    // Placeholder implementation
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Barra superior con botón de atrás y vidas
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                "❌",
-                modifier = Modifier.clickable { onBackClick() },
-                fontSize = 24.sp,
-                color = TextWhite
-            )
-            Row {
-                Icon(Icons.Filled.Favorite, contentDescription = "Life", tint = Color.Red)
-                Icon(Icons.Filled.Favorite, contentDescription = "Life", tint = Color.Red)
-                Icon(Icons.Outlined.FavoriteBorder, contentDescription = "Lost life", tint = TextGray)
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Pregunta
-        Text("Calcula la pendiente:", color = TextGray, fontSize = 18.sp)
+        Text("Exercise Screen", color = TextWhite)
         Spacer(modifier = Modifier.height(16.dp))
-        Text("y = 3x - 2", color = TextWhite, fontSize = 48.sp, fontWeight = FontWeight.Bold)
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Opciones
-        val options = listOf(3, -2, 2, -3)
-        options.chunked(2).forEach { rowOptions ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                rowOptions.forEach { opt ->
-                    val isSelected = selectedAnswer == opt
-                    val color = if (isSelected && isSuccess) NeonGreen else if (isSelected) Color.Red else SurfaceColor
-
-                    Button(
-                        onClick = {
-                            selectedAnswer = opt
-                            if (opt == 3) isSuccess = true
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(80.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = color),
-                        elevation = ButtonDefaults.buttonElevation(8.dp)
-                    ) {
-                        Text(text = opt.toString(), fontSize = 24.sp, color = TextWhite)
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onCorrectAnswered) {
+            Text("Submit Answer")
         }
-        Spacer(modifier = Modifier.height(32.dp))
-    }
-
-    // Success Overlay simple
-    if (isSuccess) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.7f)), contentAlignment = Alignment.Center) {
-            Text("¡CORRECTO!", color = NeonGreen, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onBackClick) {
+            Text("Back to Lessons")
         }
-    }
-}
-
-// --- PREVIEWS ---
-@Preview(showBackground = true)
-@Composable
-fun PreviewGamerDesign() {
-    PrototipoProyectoFinalTheme {
-        CoursesScreen()
     }
 }

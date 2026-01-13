@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <path
+        android:fillColor="#0B0B1E"
+        android:pathData="M0,0h200v200H0z" />
+
+    <!-- Placeholder for \"Mathim\" -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,90 H100 V110 H30 Z" />
+
+    <!-- Placeholder for \"App\" -->
+    <path
+        android:fillColor="#DEA321"
+        android:pathData="M105,90 H145 V110 H105 Z" />
+</vector>
